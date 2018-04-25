@@ -151,7 +151,7 @@ if __name__ == '__main__':
     save_model = args.output + '_merge_bn.prototxt'
     save_weights = args.output + '_merge_bn.caffemodel'
 
-
+    caffe.set_mode_cpu()
     model_merge = bn_absorber_prototxt(train_model)
 
     # save prototxt for inference

@@ -14,7 +14,7 @@ from os.path import join
 import argparse
 import sys
 
-caffe_root = '/home/sad/ENet/caffe-enet/'   # Change this to your project's caffe path 
+caffe_root = '/home/sad/ENet/caffe-enet/'  # Change this to the absolute directory to ENet Caffe
 sys.path.insert(0, caffe_root + 'python')
 import caffe
 import cv2
@@ -39,9 +39,14 @@ def merge_label_image(label_path):
     input_path_ext = label_path.split(".")[-1]
     input_image_name = label_path.split("/")[-1:][0].replace('.' + input_path_ext, '')
 
-    img = cv2.imread(args.images + input_image_name + '.jpg', 1).astype(np.float32)
+    img = cv2.imread(args.images + input_image_name + '.jpg', 1)
     if img is None:
-        return
+        img = cv2.imread(args.images + input_image_name + '.png', 1)
+        if img is None:
+            img = cv2.imread(args.images + input_image_name + '.jpeg', 1)
+            if img is None:
+                return
+    img = img.astype(np.float32)
 
     resize_label = cv2.resize(label, (img.shape[1], img.shape[0]))
 

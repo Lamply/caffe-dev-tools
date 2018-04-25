@@ -37,6 +37,7 @@ def make_parser():
     parser.add_argument('--use_mean', help='implement with mean subtraction', action="store_true")
     parser.add_argument('--use_scale', help='implement with value scale', action="store_true")
     parser.add_argument('--dataset', type=str, default='dev', help='dev or hard')
+    parser.add_argument('--prior', type=str, default=None, help='use prior as input')
  
     return parser
 
@@ -76,6 +77,13 @@ if __name__ == '__main__':
     if args.use_scale:
         print('use scale')
 
+    if args.prior is not None:
+        prior = np.load(args.prior)
+        if prior is None:
+            print("prior load error")
+        prior = cv2.resize(prior, (input_shape[3], input_shape[2]))
+        input_prior = prior.reshape((1, 1, prior.shape[0], prior.shape[1]))
+
     IoU = np.array([], dtype=np.float32)
     try:
         for input in input_files.readlines():
@@ -107,6 +115,9 @@ if __name__ == '__main__':
             input_image = np.asarray([input_image])
 
             net.blobs['data'].data[...] = input_image
+
+            if args.prior is not None:
+                net.blobs['prior'].data[...] = input_prior
 
             start = time()
             net.forward()

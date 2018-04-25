@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-This script visualize the semantic segmentation.
+This script save the semantic segmentation result.
+
+Notice:
+    1. class limit to [0, 255]
 """
 import os
 import numpy as np
@@ -9,12 +12,12 @@ from argparse import ArgumentParser
 from os.path import join
 import argparse
 import sys
-caffe_root = '/home/sad/ENet/caffe-enet/'     # Change this to your project's caffe path 
+caffe_root = '/home/sad/ENet/caffe-enet/'  # Change this to the absolute directory to ENet Caffe
 sys.path.insert(0, caffe_root + 'python')
 import caffe
 import cv2
 from time import time
-import multiprocessing
+from image_fix_size import fix_resize
 
 
 def make_parser():
@@ -39,9 +42,11 @@ def predict_label(image_path):
         print("Input not valid.")
         return
 
-    img = cv2.imread(image_path, 1).astype(np.float32)
+    img = cv2.imread(image_path, 1)
     if img is None:
         return
+
+    img = img.astype(np.float32)
 
     input_shape = net.blobs['data'].data.shape
     output_shape = net.blobs['score_final'].data.shape
@@ -68,25 +73,20 @@ def predict_label(image_path):
     end = time()
     print("time: " + str((end - start) * 1000) + 'ms')
 
-    prediction = net.blobs['score_final'].data[0].argmax(axis=0)
+    pred = net.blobs['score_final'].data[0].argmax(axis=0).astype(np.uint8)
 
-    prediction = np.squeeze(prediction)
-    prediction = np.resize(prediction, (3, input_shape[2], input_shape[3]))
+    prediction = cv2.resize(pred, (img.shape[1], img.shape[0]))
+    prediction = np.resize(prediction, (3, prediction.shape[0], prediction.shape[1]))
     prediction = prediction.transpose(1, 2, 0).astype(np.uint8)
-    # prediction = cv2.resize(prediction, (img.shape[1], img.shape[0]), interpolation=cv2.INTER_NEAREST)
 
     visualize = np.zeros(prediction.shape, dtype=np.uint8)
-    label_colours_bgr = label_colours[:, :, ::-1]
-    cv2.LUT(prediction, label_colours_bgr, visualize)  # This function require label_colours_bgr has 3-channel [1,256,3]
+    # label_colours_bgr = label_colours[:, :, ::-1]
+    cv2.LUT(prediction, label_colours, visualize)  # This function require label_colours_bgr has 3-channel [1,256,3]
 
     if args.out_dir is not None:
-        # input_path_ext = input.split(".")[-1]
-        # input_image_name = input.split("/")[-1:][0].replace('.' + input_path_ext, '')
         out_path_im = args.out_dir + input_image_name + '.png'
-        out_path_gt = args.out_dir + input_image_name + '.png'
 
         cv2.imwrite(out_path_im, visualize)
-        # cv2.imwrite(out_path_gt, prediction) #  label images, where each pixel has an ID that represents the class
 
 
 if __name__ == '__main__':

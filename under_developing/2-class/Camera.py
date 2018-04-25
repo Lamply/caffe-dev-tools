@@ -17,6 +17,7 @@ def make_parser():
     parser.add_argument('--weights', type=str, required=True, help='.caffemodel file')
     parser.add_argument('--use_mean', help='implement with mean subtraction', action="store_true")
     parser.add_argument('--use_scale', help='implement with value scale', action="store_true")
+    parser.add_argument('--prior', type=str, default=None, help='use prior as input')
     return parser
 
 if __name__ == '__main__':
@@ -40,6 +41,13 @@ if __name__ == '__main__':
 
     if args.use_scale:
         print('use scale')
+
+    if args.prior is not None:
+        prior = np.load(args.prior)
+        if prior is None:
+            print("prior load error")
+        prior = cv2.resize(prior, (input_shape[3], input_shape[2]))
+        input_prior = prior.reshape((1, 1, prior.shape[0], prior.shape[1]))
 
     print("Press space to detect the face, press escape to exit")
 
@@ -71,14 +79,20 @@ if __name__ == '__main__':
         input_nn = input_image.transpose((2, 0, 1))
 
         net.blobs['data'].data[...] = input_nn
+        if args.prior is not None:
+                net.blobs['prior'].data[...] = input_prior
         net.forward()
         pred = net.blobs['label'].data
         # prediction = net.blobs['deconv6_0_0_2'].data[0].argmax(axis=0)
 
         # Origin image segment display
         pred = np.squeeze(pred)[0]
+
+        resize_pred = pred.reshape(pred.shape[0], pred.shape[1], 1)
+        resize_pred = fix_resize(resize_pred, vis.shape[0], vis.shape[1], flag='crop')
+        resize_pred = resize_pred.reshape(resize_pred.shape[0], resize_pred.shape[1], 1)
         
-        seg_img = pred.reshape(pred.shape[0], pred.shape[1], 1) * resize_img
+        seg_img = resize_pred * vis
         seg_img = seg_img.astype(np.uint8)
 
         # prediction = np.squeeze(prediction)
