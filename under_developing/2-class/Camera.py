@@ -17,7 +17,7 @@ def make_parser():
     parser.add_argument('--weights', type=str, required=True, help='.caffemodel file')
     parser.add_argument('--use_mean', help='implement with mean subtraction', action="store_true")
     parser.add_argument('--use_scale', help='implement with value scale', action="store_true")
-    parser.add_argument('--prior', type=str, default=None, help='use prior as input')
+    parser.add_argument('--use_prior', help='use prior as input', action="store_true")
     return parser
 
 if __name__ == '__main__':
@@ -42,8 +42,9 @@ if __name__ == '__main__':
     if args.use_scale:
         print('use scale')
 
-    if args.prior is not None:
-        prior = np.load(args.prior)
+    if args.use_prior:
+        # prior = np.zeros((1, 1, input_shape[2], input_shape[3]), np.float32)
+        prior = np.load('../dataset/mean_square.npy')
         if prior is None:
             print("prior load error")
         prior = cv2.resize(prior, (input_shape[3], input_shape[2]))
@@ -79,11 +80,18 @@ if __name__ == '__main__':
         input_nn = input_image.transpose((2, 0, 1))
 
         net.blobs['data'].data[...] = input_nn
-        if args.prior is not None:
-                net.blobs['prior'].data[...] = input_prior
+        if args.use_prior:
+            net.blobs['prior'].data[...] = prior
         net.forward()
         pred = net.blobs['label'].data
         # prediction = net.blobs['deconv6_0_0_2'].data[0].argmax(axis=0)
+        if args.use_prior:
+            tmp_p = net.blobs['score_final'].data  # [1, 2, 224, 224]
+            tmp_f = np.exp(tmp_p[0, 0, :, :])
+            tmp_b = np.exp(tmp_p[0, 1, :, :])
+            prior = tmp_f / (tmp_f + tmp_b)
+            asd = net.blobs['prior'].data
+            cv2.imshow('asd', (asd[0][0]*255).astype(np.uint8))
 
         # Origin image segment display
         pred = np.squeeze(pred)[0]
@@ -103,7 +111,7 @@ if __name__ == '__main__':
         # label_colours_bgr = label_colours[..., ::-1]
         # cv2.LUT(prediction, label_colours_bgr, prediction_rgb)
 
-        cv2.imshow("image", seg_img)
+        # cv2.imshow("image", seg_img)
         # cv2.imshow("image", vis)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):

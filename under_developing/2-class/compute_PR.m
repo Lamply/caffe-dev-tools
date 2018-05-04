@@ -6,7 +6,7 @@ function [precision, recall] = compute_PR(input_path, seg_path, thresh)
 %
 %     seg_path: segment result dir path
 %
-%     thresh: linspace threshold for PR curve compute, [1xn]
+%     thresh: linspace threshold for PR curve compute, [1xn], linspace(1, 0, 100)
 
 %% Before Optimizationload
 % fid = fopen(input_path);

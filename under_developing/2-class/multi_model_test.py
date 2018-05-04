@@ -55,22 +55,16 @@ if __name__ == '__main__':
         output_shape = net.blobs['label'].data.shape
 
         if args.dataset == 'hard':
-            input_files = open('/home/sad/ENet/dataset/video_hard_images.txt')
-            labels_files = open('/home/sad/ENet/dataset/video_hard_labels.txt')
+            input_files = open('/home/sad/ENet/dataset/video_hard.txt')
         elif args.dataset == 'dev':
-            input_files = open('/home/sad/ENet/dataset/test_images.txt')
-            labels_files = open('/home/sad/ENet/dataset/test_label.txt')
+            input_files = open('/home/sad/ENet/dataset/protrait_test_list.txt')
         elif args.dataset == 'hard_square':
-            input_files = open('/home/sad/ENet/dataset/video_hard_images_square.txt')
-            labels_files = open('/home/sad/ENet/dataset/video_hard_labels_square.txt')
+            input_files = open('/home/sad/ENet/dataset/video_hard_square.txt')
         elif args.dataset == 'dev_square':
-            input_files = open('/home/sad/ENet/dataset/test_images_square.txt')
-            labels_files = open('/home/sad/ENet/dataset/test_label_square.txt')
+            input_files = open('/home/sad/ENet/dataset/protrait_test_list_square.txt')
         else:
             print("error: error dataset selected.")
             pass
-
-        labels = labels_files.readlines()
 
         cnt = 0
 
@@ -84,12 +78,13 @@ if __name__ == '__main__':
             IoU = np.array([], dtype=np.float32)
             for input in input_files.readlines():
                 input = input.strip()
-                img = cv2.imread(input, 1).astype(np.float32)
+                input = input.split(' ')
+                img = cv2.imread(input[0], 1).astype(np.float32)
                 if img is None:
                     continue
 
-                input_path_ext = input.split(".")[-1]
-                input_image_name = input.split("/")[-1:][0].replace('.' + input_path_ext, '')
+                input_path_ext = input[0].split(".")[-1]
+                input_image_name = input[0].split("/")[-1:][0].replace('.' + input_path_ext, '')
 
                 resize_img = cv2.resize(img, (input_shape[3], input_shape[2]))
                 input_img = resize_img
@@ -116,7 +111,7 @@ if __name__ == '__main__':
                 prediction = 1.0 * (pred > 0.5)
 
                 # IoU test
-                label_name = labels[cnt].strip()
+                label_name = input[1]
                 idx = label_name.find(input_image_name)
                 if idx is not -1:
                     test_label_ = cv2.imread(label_name, 0).astype(np.float32)
@@ -145,7 +140,6 @@ if __name__ == '__main__':
         except Exception, error:
             print error.message
 
-        labels_files.close()
         input_files.close()
 
         print('%-20s %-20s %-20s' % ('iters:', 'mIoU:', 'stdIoU:'))
