@@ -25,16 +25,16 @@ def scale_resize(src_img, scale=1.0, align_length=0, align_flag='height', interp
         return src_img
     elif align_length > 0:
         if align_flag == 'height':
-            resize_img = cv2.resize(src_img, (src_img.shape[1] * align_length / src_img.shape[0], align_length),
+            resize_img = cv2.resize(src_img, (int(src_img.shape[1] * align_length / src_img.shape[0]), align_length),
                                     interpolation=interp)
         elif align_flag == 'width':
-            resize_img = cv2.resize(src_img, (align_length, src_img.shape[0] * align_length / src_img.shape[1]),
+            resize_img = cv2.resize(src_img, (align_length, int(src_img.shape[0] * align_length / src_img.shape[1])),
                                     interpolation=interp)
         else:
             print('scale_resize(): unkown align_flag %s' % align_flag)
             return
     elif scale != 1.0:
-        resize_img = cv2.resize(src_img, (src_img.shape[1] * scale, src_img.shape[0] * scale), interpolation=interp)
+        resize_img = cv2.resize(src_img, (int(src_img.shape[1] * scale), int(src_img.shape[0] * scale)), interpolation=interp)
     else:
         print('scale_resize(): error input align_length or scale')
         return src_img
@@ -80,7 +80,7 @@ def fix_resize(src_img, dst_h, dst_w, method='bilinear', flag='pad', pad_value=0
         if flag == 'crop':
             align_flag = 1
             resize_img = scale_resize(src_img, align_length=dst_w, align_flag='width', interp=interp)
-            crop_start = (resize_img.shape[0] - dst_h) / 2
+            crop_start = int((resize_img.shape[0] - dst_h) / 2)
             if len(resize_img.shape) == 3:
                 fixed_img = resize_img[crop_start:crop_start + dst_h, :, :]
             else:
@@ -89,7 +89,7 @@ def fix_resize(src_img, dst_h, dst_w, method='bilinear', flag='pad', pad_value=0
         elif flag == 'pad':
             align_flag = 0
             resize_img = scale_resize(src_img, align_length=dst_h, align_flag='height', interp=interp)
-            pad_num = (dst_w - resize_img.shape[1]) / 2
+            pad_num = int((dst_w - resize_img.shape[1]) / 2)
             fixed_img = cv2.copyMakeBorder(resize_img, 0, 0, pad_num, dst_w - resize_img.shape[1] - pad_num,
                                            cv2.BORDER_CONSTANT, value=pad_value)
         else:
@@ -99,7 +99,7 @@ def fix_resize(src_img, dst_h, dst_w, method='bilinear', flag='pad', pad_value=0
         if flag == 'crop':
             align_flag = 0
             resize_img = scale_resize(src_img, align_length=dst_h, align_flag='height', interp=interp)
-            crop_start = (resize_img.shape[1] - dst_w) / 2
+            crop_start = int((resize_img.shape[1] - dst_w) / 2)
             if len(resize_img.shape) == 3:
                 fixed_img = resize_img[:, crop_start:crop_start + dst_w, :]
             else:
@@ -108,7 +108,7 @@ def fix_resize(src_img, dst_h, dst_w, method='bilinear', flag='pad', pad_value=0
         elif flag == 'pad':
             align_flag = 1
             resize_img = scale_resize(src_img, align_length=dst_w, align_flag='width', interp=interp)
-            pad_num = (dst_h - resize_img.shape[0]) / 2
+            pad_num = int((dst_h - resize_img.shape[0]) / 2)
             fixed_img = cv2.copyMakeBorder(resize_img, pad_num, dst_h - resize_img.shape[0] - pad_num, 0, 0,
                                            cv2.BORDER_CONSTANT, value=pad_value)
         else:
